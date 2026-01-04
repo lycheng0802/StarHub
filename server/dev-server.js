@@ -41,6 +41,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
+// 配置端点 - 返回 CLIENT_ID 給前端
+app.get('/api/config', (req, res) => {
+  res.json({ clientId: CLIENT_ID })
+})
+
 app.get('/api/getToken', async (req, res) => {
   const { code } = req.query
   

@@ -14,7 +14,23 @@
  * 4. 复制 Client ID 填入下方
  */
 
+/**
+ * GitHub OAuth 配置
+ * CLIENT_ID 從後端 /api/config 獲取
+ */
+
+let cachedClientId = ''
+
+export async function getGitHubClientId(): Promise<string> {
+  if (cachedClientId) return cachedClientId
+
+  const res = await fetch('/api/config')
+  const data = await res.json()
+  cachedClientId = data.clientId || ''
+  return cachedClientId
+}
+
 export const GITHUB_OAUTH_CONFIG = {
-  CLIENT_ID: 'Ov23liIm4iNdpnHwGLfp' // 在这里填入你的 GitHub OAuth Client ID
+  CLIENT_ID: ''
 }
 

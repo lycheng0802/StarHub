@@ -23,16 +23,16 @@ const CLIENT_ID = process.env.CLIENT_ID
 const CLIENT_SECRET = process.env.CLIENT_SECRET
 
 if (!CLIENT_ID) {
-  console.error('❌ 错误：未设置 CLIENT_ID')
-  console.error('请在 .env 文件中设置 CLIENT_ID')
-  console.error('或者从 src/config/oauth.ts 中读取（需要手动复制）')
+  console.error('❌ Error: CLIENT_ID is not set')
+  console.error('Please set CLIENT_ID in .env file')
+  console.error('Or read from src/config/oauth.ts (manual copy required)')
   process.exit(1)
 }
 
 if (!CLIENT_SECRET) {
-  console.error('❌ 错误：未设置 CLIENT_SECRET')
-  console.error('请在 .env 文件中设置 CLIENT_SECRET（从 GitHub OAuth App 获取）')
-  console.error('获取方式：https://github.com/settings/developers > 你的 OAuth App > Client Secret')
+  console.error('❌ Error: CLIENT_SECRET is not set')
+  console.error('Please set CLIENT_SECRET in .env file (obtain from GitHub OAuth App)')
+  console.error('Get it from: https://github.com/settings/developers > Your OAuth App > Client Secret')
   process.exit(1)
 }
 
@@ -81,7 +81,7 @@ app.get('/api/getToken', async (req, res) => {
       const data = await response.json()
       
       if (!data.access_token) {
-        console.error('GitHub OAuth 错误:', data)
+        console.error('GitHub OAuth error:', data)
         return res.status(500).json({ 
           error: 'Failed to get access token',
           details: data.error_description || data.error
@@ -108,7 +108,7 @@ app.get('/api/getToken', async (req, res) => {
       
       if (isRetryableError && retryCount < maxRetries) {
         retryCount++
-        console.warn(`⚠️ OAuth 请求失败 (${error.message})，${retryDelay/1000}秒后重试 (${retryCount}/${maxRetries})...`)
+        console.warn(`⚠️ OAuth request failed (${error.message}), retrying in ${retryDelay/1000} seconds (${retryCount}/${maxRetries})...`)
         await new Promise(resolve => setTimeout(resolve, retryDelay))
         continue
       }
@@ -124,15 +124,31 @@ app.get('/api/getToken', async (req, res) => {
   }
 })
 
-const PORT = 7001
-app.listen(PORT, () => {
-  console.log(`🚀 本地开发服务器运行在 http://localhost:${PORT}`)
-  console.log(`📝 确保 vite.config.ts 中的 proxy 配置已启用`)
-  console.log(`✅ 前端请求 /api/getToken 将被代理到此服务器`)
-  console.log(`💚 健康检查: http://localhost:${PORT}/api/health`)
-  console.log(`\n⚠️  如果遇到连接错误，请检查：`)
-  console.log(`   1. 确保此服务器正在运行`)
-  console.log(`   2. 检查网络连接和防火墙设置`)
-  console.log(`   3. 确认 GitHub OAuth App 的 CLIENT_ID 和 CLIENT_SECRET 已正确配置\n`)
-})
+// 靜態檔案服務（正式環境）
+const path = require('path')
+const distPath = path.join(__dirname, 'dist')
 
+// 檢查 dist 資料夾是否存在
+const fs = require('fs')
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath))
+  
+  // SPA fallback - 所有非 /api 請求都返回 index.html
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'))
+  })
+  console.log('📦 Static file serving enabled')
+}
+
+const PORT = process.env.PORT || 7001
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`)
+  if (fs.existsSync(distPath)) {
+    console.log(`🌐 Frontend service: http://localhost:${PORT}`)
+  }
+  console.log(`💚 Health check: http://localhost:${PORT}/api/health`)
+  console.log(`\n⚠️  If you encounter connection errors, please check:`)
+  console.log(`   1. Ensure this server is running`)
+  console.log(`   2. Check network connection and firewall settings`)
+  console.log(`   3. Confirm GitHub OAuth App CLIENT_ID and CLIENT_SECRET are correctly configured\n`)
+})

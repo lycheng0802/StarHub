@@ -361,7 +361,7 @@ import { openWindowCenter } from '@/utils'
 import { Link, Collection, Search, MagicStick, Reading } from '@element-plus/icons-vue'
 import { authApi } from '@/api/auth'
 import qs from 'query-string'
-import { GITHUB_OAUTH_CONFIG } from '@/config/oauth'
+import { getGitHubClientId } from '@/config/oauth'
 
 const { t, locale } = useI18n()
 const themeStore = useThemeStore()
@@ -440,13 +440,12 @@ const login = async (code: string) => {
   }
 }
 
-const handleLogin = () => {
+const handleLogin = async () => {
   loading.value = true
   error.value = ''
 
-  // GitHub OAuth parameters（完全按照原项目的方式）
-  // 注意：GitHub OAuth 必须要有 Client ID，这是 GitHub 的安全要求
-  const clientId = GITHUB_OAUTH_CONFIG.CLIENT_ID
+  // 從 API 獲取 CLIENT_ID
+  const clientId = await getGitHubClientId()
   
   // 检查是否配置了 Client ID
   if (!clientId || !clientId.trim()) {
